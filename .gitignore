@@ -1,0 +1,18 @@
+# Секреты — НЕ коммитить!
+.env
+
+# Данные бота
+state.json
+admins.json
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Прочее
+*.log
+.DS_Store
