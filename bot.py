@@ -519,11 +519,24 @@ async def addchannel_command(update: Update, context: ContextTypes.DEFAULT_TYPE)
         except Exception:
             logger.info("Не удалось написать админу %s канала %s", u.id, channel["username"])
 
+    # Фолбэк: если в личку никому не дошло — публикуем запрос прямо в канал-партнёр
+    posted_channel = False
     if delivered == 0:
+        try:
+            await context.bot.send_message(
+                chat_id=channel["username"],
+                text=text,
+                parse_mode="HTML",
+                reply_markup=keyboard,
+            )
+            posted_channel = True
+        except Exception:
+            logger.exception("Не удалось опубликовать запрос в канал %s", channel["username"])
+
+    if delivered == 0 and not posted_channel:
         await update.message.reply_text(
-            f"⚠️ Не удалось отправить запрос админам {channel['username']}.\n"
-            f"Попроси их зайти в @{(await context.bot.get_me()).username} и нажать /start, "
-            "затем повтори /addchannel."
+            f"⚠️ Не удалось отправить запрос ни в личку админам, ни в сам канал "
+            f"{channel['username']}. Проверь, что бот там администратор."
         )
         return
 
@@ -536,10 +549,17 @@ async def addchannel_command(update: Update, context: ContextTypes.DEFAULT_TYPE)
     }
     save_pending(pending)
 
-    await update.message.reply_text(
-        f"📨 Запрос на совместный розыгрыш отправлен админам {channel['username']} "
-        f"({delivered}). Канал добавится в условия после их согласия."
-    )
+    if delivered > 0:
+        await update.message.reply_text(
+            f"📨 Запрос на совместный розыгрыш отправлен админам {channel['username']} "
+            f"({delivered}). Канал добавится в условия после их согласия."
+        )
+    else:
+        await update.message.reply_text(
+            f"📨 Админы {channel['username']} ещё не запускали бота, поэтому я опубликовал "
+            f"запрос прямо в канале {channel['username']}. Согласиться сможет любой его "
+            "администратор кнопкой под сообщением."
+        )
 
 
 async def removechannel_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
