@@ -4,6 +4,8 @@
 # Данные бота
 state.json
 admins.json
+channels.json
+pending.json
 
 # Python
 __pycache__/
